@@ -1,0 +1,25 @@
+{
+  "name": "@unlaxer/dxe-server",
+  "version": "0.1.0",
+  "description": "dxe-server — DxE toolkit の状態・決定を可視化する API サーバー + ブラウザUI",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/opaopa6969/dxe-server"
+  },
+  "keywords": [
+    "dxe",
+    "dge",
+    "dre",
+    "dde",
+    "visualization",
+    "state-machine",
+    "claude-code"
+  ],
+  "bin": {
+    "dxe-server": "./bin/dxe-server.js"
+  },
+  "scripts": {
+    "start": "node bin/dxe-server.js start"
+  }
+}
