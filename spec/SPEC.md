@@ -40,14 +40,17 @@
 
 dxe-server は DxE ツールキットシリーズのオプション可視化アドオンである。DxE シリーズ（DGE / DDE / DRE / DVE / DxE-suite）の中で、dxe-server が担う唯一の防衛可能なスコープは **DDE ドキュメント補完状態の可視化と週次レポート生成**である。
 
-```
-DGE-toolkit   → 設計 Gap 抽出（会話劇）
-DDE-toolkit   → ドキュメント補完
-DRE-toolkit   → rules/skills 配布・管理
-DVE           → 決定グラフ可視化（Session→Gap→DD→Spec）
-DxE-suite     → 上4本のインストール管理
-──────────────────────────────────────────
-dxe-server    → DDE 可視化 + 週次レポート（任意、スタンドアロン）
+```mermaid
+graph LR
+    DGE["DGE-toolkit<br/>設計 Gap 抽出（会話劇）"]
+    DDE["DDE-toolkit<br/>ドキュメント補完"]
+    DRE["DRE-toolkit<br/>rules/skills 配布・管理"]
+    DVE["DVE<br/>決定グラフ可視化<br/>（Session→Gap→DD→Spec）"]
+    SUITE["DxE-suite<br/>上4本のインストール管理"]
+    DXE["dxe-server<br/>DDE 可視化 + 週次レポート<br/>（任意、スタンドアロン）"]
+
+    DGE & DDE & DRE & DVE --> SUITE
+    SUITE -. "オプション add-on" .-> DXE
 ```
 
 ### 1.3 現在の開発ステータス
@@ -271,26 +274,15 @@ Option C（レポートジェネレーター）であれば永続化層は不要
 
 Option B（常駐サーバー）の場合:
 
-```
-         起動
-          │
-          ▼
-      ┌─────────┐
-      │ STARTING │  設定ファイル読み込み、ポートバインド
-      └────┬────┘
-           │ 成功
-           ▼
-      ┌─────────┐
-      │ RUNNING  │  リクエスト受付中
-      └────┬────┘
-           │ Ctrl+C / SIGTERM
-           ▼
-      ┌──────────┐
-      │ STOPPING │  接続クローズ、ファイルフラッシュ
-      └────┬─────┘
-           │
-           ▼
-        停止完了
+```mermaid
+flowchart TD
+    START([起動]) --> STARTING
+    STARTING["STARTING<br/>設定ファイル読み込み、ポートバインド"]
+    STARTING -->|成功| RUNNING
+    RUNNING["RUNNING<br/>リクエスト受付中"]
+    RUNNING -->|"Ctrl+C / SIGTERM"| STOPPING
+    STOPPING["STOPPING<br/>接続クローズ、ファイルフラッシュ"]
+    STOPPING --> DONE([停止完了])
 ```
 
 Option C（ワンショット）の場合: `RUNNING` ステートなし。`STARTING → GENERATING → DONE` の3ステートのみ。
@@ -329,35 +321,24 @@ stateDiagram-v2
 
 各登録プロジェクトの DDE 補完状態:
 
-```
-          登録
-           │
-           ▼
-    ┌──────────────┐
-    │  UNINITIALIZED │  completion.json が存在しない
-    └───────┬────────┘
-            │ DDE が completion.json を生成
-            ▼
-    ┌──────────────┐
-    │   TRACKED    │  補完データあり、正常トラッキング中
-    └───────┬────────┘
-            │ completion.json が古い（TTL 超過）
-            ▼
-    ┌──────────────┐
-    │    STALE     │  データ陳腐化（再実行を促す）
-    └───────┬────────┘
-            │ DDE 再実行 → completion.json 更新
-            ▼
-    ┌──────────────┐
-    │   TRACKED    │  （更新完了で TRACKED に戻る）
-    └──────────────┘
+```mermaid
+flowchart TD
+    REG([登録]) --> UNINIT
+    UNINIT["UNINITIALIZED<br/>completion.json が存在しない"]
+    UNINIT -->|"DDE が completion.json を生成"| TRACKED
+    TRACKED["TRACKED<br/>補完データあり、正常トラッキング中"]
+    TRACKED -->|"completion.json が古い（TTL 超過）"| STALE
+    STALE["STALE<br/>データ陳腐化（再実行を促す）"]
+    STALE -->|"DDE 再実行 → completion.json 更新"| TRACKED
 ```
 
 ### 4.3 週次レポートジョブステートマシン
 
-```
-IDLE → SCHEDULED → GENERATING → COMPLETED
-                              └→ FAILED → IDLE (再試行)
+```mermaid
+flowchart LR
+    IDLE --> SCHEDULED --> GENERATING --> COMPLETED
+    GENERATING -->|失敗| FAILED
+    FAILED -->|再試行| IDLE
 ```
 
 このステートマシンは Option B（常駐サーバー）でのみ意味を持つ。Option C では `GENERATING → COMPLETED / FAILED` の2ステートのみ。
@@ -838,8 +819,9 @@ ADR-002 判断後に CI ワークフローを実装する。現時点では scaf
 
 ### 12.3 リリースフロー（計画）
 
-```
-feature ブランチ → PR → main マージ → CHANGELOG.md 更新 → npm publish
+```mermaid
+flowchart LR
+    FB["feature ブランチ"] --> PR["PR"] --> MM["main マージ"] --> CL["CHANGELOG.md 更新"] --> NP["npm publish"]
 ```
 
 DVE を含む DxE-suite のリリースサイクルとは**独立**している（ADR-001 の決定）。
@@ -968,26 +950,26 @@ Q3（Option B / C 共通）: マルチプロジェクト横断集約は必要か
 flowchart TD
     START([ADR-002 判断開始]) --> Q1
 
-    Q1{"Q1: DDE 可視化を DVE の\n一機能として吸収できるか?"}
-    Q1 -->|Yes| OA["Option A\nDVE への吸収\n(dxe-server archive)"]
+    Q1{"Q1: DDE 可視化を DVE の<br/>一機能として吸収できるか?"}
+    Q1 -->|Yes| OA["Option A<br/>DVE への吸収<br/>(dxe-server archive)"]
     Q1 -->|No — DVE の UX モデルに合わない| Q2
 
     Q2{"Q2: 主なユースケースは?"}
-    Q2 -->|リアルタイム\nダッシュボード| Q3B
-    Q2 -->|非同期レポート\n(CI / メール / Slack)| Q3C
+    Q2 -->|"リアルタイム<br/>ダッシュボード"| Q3B
+    Q2 -->|"非同期レポート<br/>(CI / メール / Slack)"| Q3C
 
-    Q3B{"Q3: マルチプロジェクト\n横断集約は必要か?"}
-    Q3B -->|Yes| OB["Option B\nDDE 専用サーバー\n(localhost:4175)"]
-    Q3B -->|No| ALT["Option C または\ndde status CLI で代替"]
+    Q3B{"Q3: マルチプロジェクト<br/>横断集約は必要か?"}
+    Q3B -->|Yes| OB["Option B<br/>DDE 専用サーバー<br/>(localhost:4175)"]
+    Q3B -->|No| ALT["Option C または<br/>dde status CLI で代替"]
 
-    Q3C{"Q3: マルチプロジェクト\n横断集約は必要か?"}
+    Q3C{"Q3: マルチプロジェクト<br/>横断集約は必要か?"}
     Q3C -->|Yes| OB
-    Q3C -->|No — 単一プロジェクトで十分| OC["Option C\nレポートジェネレーター\n(npx dxe-server report)"]
+    Q3C -->|No — 単一プロジェクトで十分| OC["Option C<br/>レポートジェネレーター<br/>(npx dxe-server report)"]
 
     OA --> END_A([dxe-server リポジトリ archive])
-    OB --> END_B([フェーズ 0 実装開始\nbin/dxe-server.js 作成])
-    OC --> END_C([フェーズ 0 実装開始\nCLI サブコマンド作成])
-    ALT --> END_ALT([dde status コマンドで対応\ndxe-server 不要])
+    OB --> END_B(["フェーズ 0 実装開始<br/>bin/dxe-server.js 作成"])
+    OC --> END_C(["フェーズ 0 実装開始<br/>CLI サブコマンド作成"])
+    ALT --> END_ALT(["dde status コマンドで対応<br/>dxe-server 不要"])
 
     style OA fill:#ffcccc,stroke:#cc0000
     style OB fill:#ccffcc,stroke:#006600
