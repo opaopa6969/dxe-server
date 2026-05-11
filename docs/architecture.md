@@ -27,19 +27,22 @@ The critical question — whether dxe-server should cover DRE state and multi-pr
 
 ## Intended Architecture (when implemented)
 
-```
-┌─────────────────────────────────────────┐
-│  npx dxe-server start                   │
-│                                         │
-│  Node.js server (port TBD)              │
-│  ├── GET  /api/dde/status               │  DDE completion state per project
-│  ├── GET  /api/dde/weekly-report        │  weekly progress digest
-│  └── GET  /                             │  browser UI (static SPA)
-│                                         │
-│  Data sources:                          │
-│  ├── DDE output files (project dirs)    │
-│  └── project registry (config file)    │
-└─────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Cmd["npx dxe-server start"]
+    Server["Node.js server (port TBD)"]
+    R1["GET /api/dde/status<br/>DDE completion state per project"]
+    R2["GET /api/dde/weekly-report<br/>weekly progress digest"]
+    R3["GET /<br/>browser UI (static SPA)"]
+    DS1["DDE output files (project dirs)"]
+    DS2["project registry (config file)"]
+
+    Cmd --> Server
+    Server --> R1
+    Server --> R2
+    Server --> R3
+    Server -.- DS1
+    Server -.- DS2
 ```
 
 **Not yet decided**: whether this server persists (daemon) or is ephemeral (on-demand `npx`).
