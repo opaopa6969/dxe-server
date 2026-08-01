@@ -19,6 +19,9 @@
   "bin": {
     "dxe-server": "./bin/dxe-server.js"
   },
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node bin/dxe-server.js start"
   }
