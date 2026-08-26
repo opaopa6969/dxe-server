@@ -1,0 +1,119 @@
+{
+  "repo": "dxe-server",
+  "surveyed_at": "2026-08-22T00:00:00Z",
+  "kind": "service",
+  "summary": "DxE ツールキットシリーズのオプション可視化アドオン。DDE ドキュメント補完状態の可視化と週次レポート生成を想定。2026-08-22 時点で v0.1.0 scaffold のみで bin/dxe-server.js は未作成、実行可能コードなし。ADR-002（Option A/B/C）が未決定で実装ブロック中。",
+  "decision": "defer",
+  "decision_reason": "実行可能コードが1行も存在しない scaffold であり、MCP 化の対象（サーバ化する能力）が未実装。ADR-002 でスコープ（常駐サーバか CLI レポートジェネレータか、DVE 吸収か）が決まらないと API すら確定しない。さらに前提データの completion.json が DDE 側で未実装。現時点で MCP 化しても空振りするため defer とする。ADR-002 決定 + bin/dxe-server.js 実装 + completion.json が出るまでは再調査しない。",
+  "existing": {
+    "http_api": false,
+    "cli": false,
+    "mcp": false,
+    "healthz": false,
+    "volta_manifest": false,
+    "hosted_url": null
+  },
+  "proposed_namespace": "dxe",
+  "capabilities": [
+    {
+      "verb": "DDE 補完状態を取得する",
+      "kind": "tool",
+      "name": "dde_status",
+      "io": "projectId? → {projects: [{id, completionRate, totalPages, completedPages, terms, ddeState}]}",
+      "side_effect": "read",
+      "long_running": false,
+      "maps_to": "spec/SPEC.md §6.3 GET /api/dde/status（未実装）"
+    },
+    {
+      "verb": "週次ダイジェストレポートを生成する",
+      "kind": "tool",
+      "name": "weekly_report",
+      "io": "projectId?, format → Markdown|HTML text",
+      "side_effect": "read",
+      "long_running": false,
+      "maps_to": "spec/SPEC.md §5.3 / §6 GET /api/dde/weekly-report（未実装）"
+    },
+    {
+      "verb": "DDE 補完率の時系列推移を取得する",
+      "kind": "tool",
+      "name": "trend",
+      "io": "projectId, days? → [{date, completionRate}]",
+      "side_effect": "read",
+      "long_running": false,
+      "maps_to": "spec/SPEC.md §5.4 / §6 GET /api/dde/trend（未実装）"
+    },
+    {
+      "verb": "プロジェクトを登録・解除する",
+      "kind": "tool",
+      "name": "register_project",
+      "io": "path, label?, id? → {id, path, label, registeredAt}",
+      "side_effect": "write",
+      "long_running": false,
+      "maps_to": "spec/SPEC.md §6.4 POST /api/projects/register（未実装）"
+    },
+    {
+      "verb": "DDE 補完状態の仕様",
+      "kind": "resource",
+      "name": "spec",
+      "uri": "dxe://spec"
+    },
+    {
+      "verb": "dxe-server の使い方",
+      "kind": "resource",
+      "name": "guide",
+      "uri": "dxe://guide"
+    },
+    {
+      "verb": "DVE との責務分割と連携手順",
+      "kind": "skill",
+      "name": "dve-coexistence",
+      "locality": "repo"
+    }
+  ],
+  "composition_examples": [
+    "dxe__dde_status → design__search_design_resources（DDE 補完率が低いページのデザイン改善候補を探す）",
+    "dxe__weekly_report → kamishibai__render_start（週次レポートを台本にして動画サマリーを生成）",
+    "dxe__dde_status → index__agent_fork（補完率が低いプロジェクトでドキュメント修正エージェントを起動）"
+  ],
+  "dependencies": [
+    {
+      "repo": "dxe-suite",
+      "direction": "depends_on",
+      "capability": "DDE-toolkit の completion.json 出力（未実装）。dxe-server はこのファイルを読んで動くが、DDE 側で出力機能の追加が必要。",
+      "exists_now": false,
+      "note": "spec/SPEC.md 付録 G 参照。DDE 側の変更要件。これがないと dxe-server は空状態しか返せない。"
+    },
+    {
+      "repo": "dxe-suite",
+      "direction": "depends_on",
+      "capability": "DVE の POST /api/scan によるプロジェクト発見（将来的に参照候補）",
+      "exists_now": true,
+      "note": "spec/SPEC.md 付録 H.3 で DVE /api/scan 結果からプロジェクト自動インポートを将来候補として記載。現時点では未連携。"
+    },
+    {
+      "repo": "dxe-suite",
+      "direction": "provides_to",
+      "capability": "DDE 補完状態の可視化・週次レポート（DVE がカバーしない領域）",
+      "exists_now": false,
+      "note": "docs/relationship-with-dve.md で DVE の空白領域を dxe-server が担う設計だが、dxe-server 自身が未実装のため今は提供していない。"
+    }
+  ],
+  "library_serve": {
+    "needed": false,
+    "new_work": [],
+    "runtime": "node",
+    "estimated_effort": "S"
+  },
+  "risks": [
+    "ADR-002 が Option A（DVE 吸収）になった場合、リポジトリ自体が archive され MCP 化の前提が消える。",
+    "completion.json が DDE 側で未実装のため、dxe-server を実装しても入力データが存在しない。データ契約の合意が先行必須。",
+    "Critical Gap #2（複数プロジェクト横断集約の価値）と #3（利用者・頻度）が未解決。サーバ化（Option B）が不要になる可能性がある。",
+    "localhost バインド想定（spec/SPEC.md §10.3）のため、volta 参加には 0.0.0.0 bind・healthz・PORT 環境変数対応の追加が必要。"
+  ],
+  "open_questions": [
+    "ADR-002 の決定はいつ出るか？Option A（archive）/ B（常駐サーバ）/ C（CLI レポート）のどれになるか。",
+    "DDE-toolkit に completion.json 出力を追加する計画はあるか？これがなければ dxe-server は動作不能。",
+    "Option B が選択された場合、localhost ツールを volta に参加させる（0.0.0.0 bind + healthz）価値があるか？それともローカル npx で十分か？",
+    "Option C（CLI レポートジェネレータ）になった場合、常駐サーバでないものを MCP 化するか、それとも CLI を薄く包む tool を作るか？"
+  ]
+}
