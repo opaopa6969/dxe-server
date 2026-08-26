@@ -1096,6 +1096,7 @@ Options (report):
 // NOTE: このファイルは未作成。以下は設計スケルトンのみ。
 
 import { parseArgs } from 'node:util';
+import { writeFile } from 'node:fs/promises';
 import { loadConfig } from '../src/config/loader.js';
 import { startServer } from '../src/server/index.js';   // Option B のみ
 import { generateReport } from '../src/report/generator.js';
