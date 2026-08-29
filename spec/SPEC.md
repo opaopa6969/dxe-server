@@ -774,16 +774,15 @@ kill %1
 ### 11.4 CI 統合（計画）
 
 ```yaml
-# .github/workflows/ci.yml (計画)
+# .github/workflows/ci.yml (現状)
 # jobs:
-#   test:
-#     - npm install
-#     - npm run test:unit
-#     - npm run test:integration
-#     - npm run test:smoke
+#   build:
+#     - npm install --legacy-peer-deps
+#     - npm run build   # package.json に build スクリプトが存在する場合のみ実行
+#     - npm test        # package.json に test スクリプトが存在する場合のみ実行
 ```
 
-ADR-002 判断後に CI ワークフローを実装する。現時点では scaffold のため CI は未設定。
+CI ワークフローは設定済み（`.github/workflows/ci.yml`）。現状は scaffold 段階であり、`package.json` に `build` / `test` スクリプトが存在する場合のみ実行し、未定義ならスキップする（空振り green）。ADR-002 判断後に `test:unit` / `test:integration` / `test:smoke` の各ステップを追加して実質化する。
 
 ---
 
@@ -974,7 +973,7 @@ ADR-002 が解決した後の実装順序を示す。これは計画であり確
 
 #### フェーズ 0 — 基盤（ADR-002 決定直後）
 
-目標: `npx dxe-server start` が起動エラーを出さずに `"Hello, dxe-server"` を返すまで。
+目標: `npx dxe-server start` が起動エラーを出さずに `GET /api/health` が `{"status":"ok","version":"x.y.z"}` を返すまで。
 
 | タスク | 説明 | 完了条件 |
 |---|---|---|
@@ -1466,7 +1465,7 @@ ADR-002 以外に本 SPEC 作成時点で未決定の事項を列挙する。ADR
 
 | 問い | 選択肢 | 現状 |
 |---|---|---|
-| `npx dxe-server start` でブラウザを開くか | (a) デフォルトで開く（`--no-open` で抑制）/ (b) デフォルトで開かない（`--open` で有効化） | 未決定 |
+| `npx dxe-server start` でブラウザを開くか | (a) デフォルトで開く（`--no-open` で抑制）/ (b) デフォルトで開かない（`--open` で有効化） | 決定済み: (a) デフォルトで開く |
 | CI 環境での挙動 | (a) `CI=true` 環境変数を検出して自動抑制 / (b) 明示的なフラグのみ | `CI=true` 検出を原則とする（計画） |
 
 ---
@@ -1542,7 +1541,7 @@ ADR-002 決定後、フェーズ 0 の実装が完了したと見なすための
 - [ ] `node bin/dxe-server.js --version` を実行すると `@unlaxer/dxe-server@0.2.0` 相当が表示される
 - [ ] `node bin/dxe-server.js start` を実行するとポート 4175 でサーバーが起動する
 - [ ] `Ctrl+C` または `SIGTERM` でサーバーが graceful shutdown する
-- [ ] `curl http://localhost:4175/api/health` が `{"status":"ok"}` を返す
+- [ ] `curl http://localhost:4175/api/health` が `{"status":"ok","version":"x.y.z"}` を返す
 - [ ] `DXE_SERVER_PORT=4200 node bin/dxe-server.js start` で指定ポートで起動する
 
 ### P.2 設定ファイル
